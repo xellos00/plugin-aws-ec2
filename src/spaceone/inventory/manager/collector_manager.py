@@ -9,6 +9,7 @@ from spaceone.inventory.manager.ec2 import EC2InstanceManager, AutoScalingGroupM
 from spaceone.inventory.manager.metadata.metadata_manager import MetadataManager
 from spaceone.inventory.model.server import Server, ReferenceModel
 from spaceone.inventory.model.region import Region
+from spaceone.inventory.model.cloud_service_type import CloudServiceType
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -118,7 +119,6 @@ class CollectorManager(BaseManager):
                     'nics': nic_vos,
                     'disks': disk_vos,
                     'region_code': params.get("region_name", ''),
-                    'region_type': 'AWS'
                 })
 
                 server_data['data'].update({
@@ -165,6 +165,15 @@ class CollectorManager(BaseManager):
         except Exception as e:
             print(f'[ERROR: {params["region_name"]}] : {e}')
             raise e
+
+    @staticmethod
+    def list_cloud_service_types():
+        cloud_service_type = {
+            'tags': {
+                'spaceone:icon': 'https://spaceone-custom-assets.s3.ap-northeast-2.amazonaws.com/console-assets/icons/aws-ec2.svg',
+            }
+        }
+        return [CloudServiceType(cloud_service_type, strict=False)]
 
     @staticmethod
     def get_volume_ids(instance):
