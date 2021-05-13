@@ -3,7 +3,7 @@ from spaceone.inventory.model.metadata.metadata import ServerMetadata
 from spaceone.inventory.model.metadata.metadata_dynamic_layout import ItemDynamicLayout, TableDynamicLayout, \
     ListDynamicLayout
 from spaceone.inventory.model.metadata.metadata_dynamic_field import TextDyField, EnumDyField, ListDyField, \
-    DateTimeDyField
+    DateTimeDyField, SizeField
 
 ec2_instance = ItemDynamicLayout.set_fields('EC2 Instance', fields=[
     TextDyField.data_source('Instance ID', 'data.compute.instance_id'),
@@ -75,10 +75,13 @@ ec2 = ListDynamicLayout.set_layouts('AWS EC2', layouts=[ec2_instance, ec2_vpc, e
 disk = TableDynamicLayout.set_fields('Disk', root_path='disks', fields=[
     TextDyField.data_source('Index', 'device_index'),
     TextDyField.data_source('Name', 'device'),
-    TextDyField.data_source('Size(GiB)', 'size'),
+    SizeField.data_source('Size(GB)', 'size', options={
+        'display_unit': 'GB',
+        'source_unit': 'GB'
+    }),
     TextDyField.data_source('Volume ID', 'tags.volume_id'),
     EnumDyField.data_source('Volume Type', 'tags.volume_type',
-                            default_outline_badge=['gp2', 'io1', 'sc1', 'st1', 'standard']),
+                            default_outline_badge=['gp2', 'gp3', 'io1', 'sc1', 'st1', 'standard']),
     TextDyField.data_source('IOPS', 'tags.iops'),
     EnumDyField.data_source('Encrypted', 'tags.encrypted', default_badge={
         'indigo.500': ['true'], 'coral.600': ['false']
@@ -128,8 +131,8 @@ elb = TableDynamicLayout.set_fields('ELB', root_path='data.load_balancer', field
 ])
 
 tags = TableDynamicLayout.set_fields('AWS Tags', root_path='data.aws.tags', fields=[
-    TextDyField.data_source('Key', 'Key'),
-    TextDyField.data_source('Value', 'Value'),
+    TextDyField.data_source('Key', 'key'),
+    TextDyField.data_source('Value', 'value'),
 ])
 
 metadata = ServerMetadata.set_layouts([ec2, tags, disk, nic, security_group, elb])

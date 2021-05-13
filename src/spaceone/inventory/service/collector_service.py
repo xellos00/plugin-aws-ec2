@@ -62,7 +62,9 @@ FILTER_FORMAT = [
     }
 ]
 
+SUPPORTED_FEATURES = ['garbage_collection']
 SUPPORTED_RESOURCE_TYPE = ['inventory.Server', 'inventory.Region', 'inventory.CloudServiceType']
+SUPPORTED_SCHEDULES = ['hours']
 NUMBER_OF_CONCURRENT = 20
 
 
@@ -79,8 +81,10 @@ class CollectorService(BaseService):
         """
         capability = {
             'filter_format': FILTER_FORMAT,
-            'supported_resource_type': SUPPORTED_RESOURCE_TYPE
-            }
+            'supported_resource_type': SUPPORTED_RESOURCE_TYPE,
+            'supported_features': SUPPORTED_FEATURES,
+            'supported_schedules': SUPPORTED_SCHEDULES
+        }
         return {'metadata': capability}
 
     @transaction
@@ -139,14 +143,17 @@ class CollectorService(BaseService):
                 future_executors.append(executor.submit(self.collector_manager.list_resources, mp_param))
 
             for future in concurrent.futures.as_completed(future_executors):
-                for result in future.result():
-                    collected_region = self.collector_manager.get_region_from_result(result)
+                try:
+                    for result in future.result():
+                        collected_region = self.collector_manager.get_region_from_result(result)
 
-                    if collected_region is not None and collected_region.region_code not in collected_region_code:
-                        resource_regions.append(collected_region)
-                        collected_region_code.append(collected_region.region_code)
+                        if collected_region is not None and collected_region.region_code not in collected_region_code:
+                            resource_regions.append(collected_region)
+                            collected_region_code.append(collected_region.region_code)
 
-                    yield result, server_resource_format
+                        yield result, server_resource_format
+                except Exception as e:
+                    _LOGGER.error(f'failed to result {e}')
 
         for resource_region in resource_regions:
             yield resource_region, region_resource_format
@@ -199,7 +206,7 @@ class CollectorService(BaseService):
                       'instance_type': 'm4.xlarge',
                       'region_name': ['aaaa']
                   }
-        If there is regiona_name in query, this indicates searching only these regions
+        If there is region_name in query, this indicates searching only these regions
         """
 
         instance_ids = []

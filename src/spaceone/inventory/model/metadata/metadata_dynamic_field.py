@@ -30,7 +30,8 @@ class Reference(Model):
 
 
 class BaseField(Model):
-    type = StringType(choices=["text", "state", "badge", "list", "dict", "datetime", "image", "enum"],
+    type = StringType(choices=["text", "state", "badge", "list", "dict",
+                               "datetime", "image", "enum", "progress", "size"],
                       serialize_when_none=False)
     options = PolyModelType([Model, DictType(PolyModelType(Model))], serialize_when_none=False)
     reference = ModelType(Reference, serialize_when_none=False)
@@ -79,6 +80,15 @@ class DateTimeDyFieldOptions(FieldViewOption):
     source_type = StringType(default='timestamp', choices=['iso8601', 'timestamp'])
     source_format = StringType(serialize_when_none=False)
     display_format = StringType(serialize_when_none=False)
+
+
+class ProgressFieldOptions(FieldViewOption):
+    unit = StringType(serialize_when_none=False)
+
+
+class SizeFieldOptions(FieldViewOption):
+    display_unit = StringType(serialize_when_none=False, choices=('BYTES', 'KB', 'MB', 'GB', 'TB', 'PB'))
+    source_unit = StringType(serialize_when_none=False, choices=('BYTES', 'KB', 'MB', 'GB', 'TB', 'PB'))
 
 
 class TextDyField(BaseDynamicField):
@@ -226,9 +236,9 @@ class ListDyField(BaseDynamicField):
             _list_options = {'delimiter': '  '}
 
             if 'type' in _default_badge and _default_badge.get('type') == 'outline':
-                _list_options.update({'item': BadgeItemDyField.set({'outline_color': 'primary.500'})})
+                _list_options.update({'item': BadgeItemDyField.set({'outline_color': 'violet.500'})})
             elif 'type' in _default_badge and _default_badge.get('type') == 'inline':
-                _list_options.update({'item': BadgeItemDyField.set({'background_color': 'primary.500'})})
+                _list_options.update({'item': BadgeItemDyField.set({'background_color': 'violet.500'})})
 
             if 'sub_key' in _default_badge:
                 _list_options.update({'sub_key': _default_badge.get('sub_key')})
@@ -303,5 +313,33 @@ class EnumDyField(BaseDynamicField):
 
         if 'reference' in kwargs:
             _data_source.update({'reference': kwargs.get('reference')})
+
+        return cls(_data_source)
+
+
+class ProgressField(BaseDynamicField):
+    type = StringType(default="progress")
+    options = PolyModelType(ProgressFieldOptions, serialize_when_none=False, )
+
+    @classmethod
+    def data_source(cls, name, key, **kwargs):
+        _data_source = {'key': key, 'name': name}
+
+        if 'options' in kwargs:
+            _data_source.update({'options': kwargs.get('options')})
+
+        return cls(_data_source)
+
+
+class SizeField(BaseDynamicField):
+    type = StringType(default="size")
+    options = PolyModelType(SizeFieldOptions, serialize_when_none=False)
+
+    @classmethod
+    def data_source(cls, name, key, **kwargs):
+        _data_source = {'key': key, 'name': name}
+
+        if 'options' in kwargs:
+            _data_source.update({'options': kwargs.get('options')})
 
         return cls(_data_source)
